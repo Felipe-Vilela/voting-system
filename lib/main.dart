@@ -275,38 +275,54 @@ class _AdminPageState extends State<AdminPage> {
   Widget build(BuildContext context) {
     var appState = context.watch<VotingAppState>();
 
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            flex: 1,
-            child: Card(
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 600),
+        child: ListView(
+          padding: const EdgeInsets.all(24.0),
+          children: [
+            Card(
+              elevation: 4,
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(24.0),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('Criar Nova Votação', style: Theme.of(context).textTheme.titleLarge),
-                    const SizedBox(height: 16),
+                    Text(
+                      'Criar Nova Votação',
+                      style: Theme.of(context).textTheme.titleLarge,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
                     TextField(
                       controller: _questionController,
-                      decoration: const InputDecoration(labelText: 'Pergunta da Enquete'),
+                      decoration: const InputDecoration(
+                        labelText: 'Pergunta da Enquete',
+                        border: OutlineInputBorder(),
+                      ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 16),
                     TextField(
                       controller: _opt1Controller,
-                      decoration: const InputDecoration(labelText: 'Opção 1'),
+                      decoration: const InputDecoration(
+                        labelText: 'Opção 1',
+                        border: OutlineInputBorder(),
+                      ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 16),
                     TextField(
                       controller: _opt2Controller,
-                      decoration: const InputDecoration(labelText: 'Opção 2'),
+                      decoration: const InputDecoration(
+                        labelText: 'Opção 2',
+                        border: OutlineInputBorder(),
+                      ),
                     ),
-                    const SizedBox(height: 20),
-                    ElevatedButton(
+                    const SizedBox(height: 24),
+                    FilledButton(
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
                       onPressed: () {
                         if (_questionController.text.isNotEmpty && _opt1Controller.text.isNotEmpty) {
                           appState.createRoom(
@@ -321,55 +337,78 @@ class _AdminPageState extends State<AdminPage> {
                           );
                         }
                       },
-                      child: const Text('Gerar Sala e Código'),
+                      child: const Text('Gerar Sala e Código', style: TextStyle(fontSize: 16)),
                     ),
                   ],
                 ),
               ),
             ),
-          ),
-          const SizedBox(width: 24),
-          Expanded(
-            flex: 1,
-            child: appState.rooms.isEmpty
-                ? const Center(child: Text('Nenhuma sala criada ainda.'))
-                : ListView.builder(
-                    itemCount: appState.rooms.length,
-                    itemBuilder: (context, index) {
-                      var room = appState.rooms[index];
-                      return Card(
-                        color: Theme.of(context).colorScheme.primaryContainer,
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(child: Text(room.question, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18))),
-                                  Chip(label: Text('CÓDIGO: ${room.code}', style: const TextStyle(fontWeight: FontWeight.bold))),
-                                ],
-                              ),
-                              const Divider(),
-                              ...room.options.map((opt) => Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 4.0),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(opt.text),
-                                    Text('${opt.votes} votos', style: const TextStyle(fontWeight: FontWeight.bold)),
-                                  ],
+            const SizedBox(height: 32),
+            if (appState.rooms.isEmpty)
+              const Center(
+                child: Text('Nenhuma sala criada ainda.'),
+              )
+            else
+              ...appState.rooms.reversed.map((room) => Padding(
+                    padding: const EdgeInsets.only(bottom: 16.0),
+                    child: Card(
+                      color: Theme.of(context).colorScheme.primaryContainer,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    room.question,
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                                  ),
                                 ),
-                              )),
-                            ],
-                          ),
+                                const SizedBox(width: 8),
+                                Chip(
+                                  label: Text(
+                                    'CÓD: ${room.code}',
+                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const Divider(),
+                            ...room.options.map((opt) => Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(child: Text(opt.text, style: const TextStyle(fontSize: 16))),
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(context).colorScheme.primary,
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: Text(
+                                          '${opt.votes} votos',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Theme.of(context).colorScheme.onPrimary,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )),
+                          ],
                         ),
-                      );
-                    },
-                  ),
-          ),
-        ],
+                      ),
+                    ),
+                  )),
+          ],
+        ),
       ),
     );
   }
