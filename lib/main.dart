@@ -172,7 +172,7 @@ class VotingAppState extends ChangeNotifier {
   }
 
   bool hasUserVoted(String roomCode) {
-    var room = getRoom(roomCode);
+    var room = getRoom(roomCode, ignoreStatus: true);
     String? uid = currentUser?.uid;
     
     if (uid == null) return false;
@@ -561,6 +561,8 @@ class _ParticipantPageState extends State<ParticipantPage> {
       );
     }
 
+    bool userAlreadyVoted = appState.hasUserVoted(currentRoom.code) || hasVoted;
+
     return Column(
       children: [
         Card(
@@ -579,7 +581,7 @@ class _ParticipantPageState extends State<ParticipantPage> {
                 Text(currentRoom.question, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold), textAlign: TextAlign.center),
                 const SizedBox(height: 32),
                 
-                if (hasVoted) ...[
+                if (userAlreadyVoted) ...[
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(color: Colors.green.shade50, borderRadius: BorderRadius.circular(12)),
