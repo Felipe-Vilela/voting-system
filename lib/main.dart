@@ -38,6 +38,7 @@ class PollRoom {
   List<PollOption> options;
   bool isActive;
   List<String> votedUsers;
+  String creatorId;
 
   PollRoom({
     required this.code,
@@ -45,6 +46,7 @@ class PollRoom {
     required this.options,
     this.isActive = true,
     List<String>? votedUsers,
+    required this.creatorId,
   }) : votedUsers = votedUsers ?? [];
 
   int get totalVotes => options.fold(0, (sum, opt) => sum + opt.votes);
@@ -54,6 +56,7 @@ class PollRoom {
     'question': question,
     'isActive': isActive,
     'votedUsers': votedUsers,
+    'organizerId': creatorId,
     'options': options.map((o) => o.toMap()).toList(),
   };
 
@@ -63,6 +66,7 @@ class PollRoom {
       question: map['question'],
       isActive: map['isActive'] ?? true,
       votedUsers: List<String>.from(map['votedUsers'] ?? []),
+      creatorId: map['organizerId'] ?? '',
       options: (map['options'] as List).map((o) => PollOption.fromMap(o)).toList(),
     );
   }
@@ -79,6 +83,11 @@ class VotingAppState extends ChangeNotifier {
   
   FirebaseFirestore get _db => FirebaseFirestore.instance;
   FirebaseAuth get _auth => FirebaseAuth.instance;
+
+  List<PollRoom> get myRooms {
+    if (currentUser == null) return [];
+    return rooms.where((room) => room.creatorId == currentUser!.uid).toList();
+  }
 
   VotingAppState() {
     _auth.authStateChanges().listen((user) {
@@ -134,7 +143,14 @@ class VotingAppState extends ChangeNotifier {
         .map((text) => PollOption(text.trim()))
         .toList();
     
-    PollRoom newRoom = PollRoom(code: code, question: question, options: options);
+    String currentUserId = currentUser?.uid ?? '';
+    
+    PollRoom newRoom = PollRoom(
+      code: code, 
+      question: question, 
+      options: options,
+      creatorId: currentUserId
+    );
     _db.collection('rooms').doc(code).set(newRoom.toMap());
     
     return code;
@@ -156,7 +172,7 @@ class VotingAppState extends ChangeNotifier {
   }
 
   bool hasUserVoted(String roomCode) {
-    var room = getRoom(roomCode);
+    var room = getRoom(roomCode, ignoreStatus: true);
     String? uid = currentUser?.uid;
     
     if (uid == null) return false;
@@ -545,6 +561,8 @@ class _ParticipantPageState extends State<ParticipantPage> {
       );
     }
 
+    bool userAlreadyVoted = appState.hasUserVoted(currentRoom.code) || hasVoted;
+
     return Column(
       children: [
         Card(
@@ -563,7 +581,7 @@ class _ParticipantPageState extends State<ParticipantPage> {
                 Text(currentRoom.question, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold), textAlign: TextAlign.center),
                 const SizedBox(height: 32),
                 
-                if (hasVoted) ...[
+                if (userAlreadyVoted) ...[
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(color: Colors.green.shade50, borderRadius: BorderRadius.circular(12)),
@@ -840,7 +858,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard> {
                   padding: EdgeInsets.only(bottom: 24.0),
                   child: Text('Suas Salas de Votação', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                 ),
-                if (appState.rooms.isEmpty)
+                if (appState.myRooms.isEmpty)
                    Center(
                     child: Padding(
                       padding: const EdgeInsets.all(48.0),
@@ -857,7 +875,7 @@ class _OrganizerDashboardState extends State<OrganizerDashboard> {
                   Wrap(
                     spacing: 16,
                     runSpacing: 16,
-                    children: appState.rooms.reversed.map((room) {
+                    children: appState.myRooms.reversed.map((room) {
                       return ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 380),
                         child: _buildRoomSummaryCard(room),
